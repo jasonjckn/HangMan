@@ -8,4 +8,16 @@ lein deps
 java -cp 'lib/*:src/' clojure.main src/run.clj
 #+END_SRC
 
+You also need a dictionary file called dict.txt.
+
+You must use this one: http://www.wordfrequency.info/500k_words.asp
+Then cut out the stuff at the top. The first few lines of dict.txt should look like: 
+
+#+BEGIN_SRC bash
+22995878	the	at	169011
+11239776	and	cc	168844
+10246048	of	io	168743
+#+END_SRC
+
+
 
