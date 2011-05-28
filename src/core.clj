@@ -65,15 +65,12 @@
                                                [len (a->pos->index dict len)])
                                              meta-dict)))])
 
-(defnl and-arrays [as]
-  (doseq [a as]
-    (doseq [[idx, elem] (indexed a)]
-      (aset ret idx (bit-and (aget ret idx) (aget a idx)))))
-  ret
-  :where [sz (alength (first as))
-          max-long (long (bits-to-long (range bit-size)))
-          ret (long-array sz max-long)])
-
+(defnl and-arrays [[a1 & as]]
+  (doseq [a as
+          [idx, elem] (indexed a)]
+      (aset-long ret idx (bit-and (aget ret idx) (aget a idx)))))
+  result
+  :where [result (aclone a1)])
 
 (defnl index-unique [index cnst]
   (and-arrays partial-cnst-ba)
@@ -91,11 +88,11 @@
 
 (defnl extract-unbound-chars [word cnstr]
   (->> (indexed word)
-       (filter-bound-chars)
+       (filter-unbound-chars)
        (remove-indices))
   :where
   [bound-pos? (set (keys cnstr))
-   filter-bound-chars #(filter (fn [[idx ch]] (not (bound-pos? idx))) %)
+   filter-unbound-chars #(filter (fn [[idx ch]] (not (bound-pos? idx))) %)
    remove-indices #(map (fn [[_ ch]] ch) %)])
 
 (defnl dict-to-ch-freq [dict cnstr]
@@ -104,8 +101,7 @@
   [unmerged (for [d dict]
               (zipmap (extract-unbound-chars (:word d) cnstr)
                       (repeat (:freq d))))
-   merged (apply merge-with + unmerged)
-   cmp #(- (compare (merged %1) (merged %2)))])
+   merged (apply merge-with + unmerged)])
 
 (defn main []
   (println "starting")
