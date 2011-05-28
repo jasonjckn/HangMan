@@ -41,6 +41,10 @@
         `(clojure.core/fn ~args (let ~v ~@body)))
       `(clojure.core/fn ~args ~@body))))
 
-
-
+(defmacro arg->> [[sym] & body]
+  (let [arg (last body)
+        body (drop-last 1 body)]
+    `(let [~sym ~arg]
+       (->> ~sym
+            ~@body))))
 
