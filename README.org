@@ -8,9 +8,8 @@ lein deps
 java -cp 'lib/*:src/' clojure.main src/run.clj
 #+END_SRC
 
-You also need a dictionary file called dict.txt.
+You also need a dictionary file called dict.txt. [[http://www.wordfrequency.info/500k_words.asp][You must use this one]]
 
-[[http://www.wordfrequency.info/500k_words.asp][You must use this one]]
 Then cut out the stuff at the top. The first few lines of dict.txt should look like: 
 
 #+BEGIN_SRC bash
