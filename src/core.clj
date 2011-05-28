@@ -5,7 +5,7 @@
          [seq-utils :only [indexed]]]
         [clojure.java io]))
 
-(def bit-size 31)
+(def bit-size 63)
 (def alpha (map char (range (int \a) (+ (int \z) 1))))
 
 (defrecord DictEntry [word freq])
@@ -31,18 +31,18 @@
 (defn meta-dict [lazy-dict trim-size]
   (group-by #(count (:word %)) (take trim-size (parsed-dict lazy-dict))))
 
-(defn bits-to-int [bits]
+(defn bits-to-long [bits]
   (-> (int 0) (for-> [[k v] (indexed bits)]
                      (when-> v (bit-set k)))))
 
 (defnl to-bit-array [is-bit-set?]
-  (int-array (map bits-to-int seq-32-bits))
+  (long-array (map bits-to-long seq-63-bits))
   
   :where [bit->idx #(int (Math/floor (/ % bit-size)))
           idx->bit #(* % bit-size)
 
 
-          seq-32-bits (partition bit-size bit-size (repeat false) is-bit-set?)
+          seq-63-bits (partition bit-size bit-size (repeat false) is-bit-set?)
 
           asize (+ 1 (bit->idx (count is-bit-set?)))])
 
@@ -71,8 +71,8 @@
       (aset ret idx (bit-and (aget ret idx) (aget a idx)))))
   ret
   :where [sz (alength (first as))
-          max-int (int (bits-to-int (range bit-size)))
-          ret (int-array sz max-int)])
+          max-long (long (bits-to-long (range bit-size)))
+          ret (long-array sz max-long)])
 
 
 (defnl index-unique [index cnst]
@@ -81,7 +81,7 @@
                             ((index letter) pos))])
 
 (defnl bit-array->idxs [ba]
-  (map (comp int first) (filter #(let [[a b] %] b) (indexed expanded)))
+  (map (comp long first) (filter #(let [[a b] %] b) (indexed expanded)))
   :where [expanded (for [i (range (alength ba)) j (range bit-size)]
                      (bit-test (aget ba i) j))])
 
@@ -99,7 +99,7 @@
    remove-indices #(map (fn [[_ ch]] ch) %)])
 
 (defnl dict-to-ch-freq [dict cnstr]
-  (into (sorted-map-by cmp) merged)
+  (reverse (sort-by (fn [[k v]] v) merged))
   :where
   [unmerged (for [d dict]
               (zipmap (extract-unbound-chars (:word d) cnstr)
@@ -111,21 +111,29 @@
   (println "starting")
   (def lazy-dict (lazy-dict!))
   (println "building meta-dict")
-  (def meta-dict$ (meta-dict lazy-dict 1000))
+  (def meta-dict$ (meta-dict lazy-dict 100000))
   (println "building meta-index")
   (def meta-index$ (build-meta-index meta-dict$))
 
   (do
-    (def len 5)
+    (println "Playing round.................")
+    (def len 9)
+    #_ conundrum
     (def index$ (meta-index$ len))
     (def dict$ (meta-dict$ len))
-    (println "uniquing")
-    (def cnstr {0 \h 1 \e})
+    #_ (println "uniquing")
+    (def cnstr {0 \c
+                1 \o
+                2 \n
+                5 \d
+                4 \n
+                })
     (def ba (index-unique index$ cnstr))
-    (println "expanding and mapping to words:")
+    #_ (println "expanding and mapping to words:")
     (def words$ (ba->words dict$ ba))
-    (println "calculating char frequencies:")
-    (println (take 5 (dict-to-ch-freq words$ cnstr)))
+    #_ (println (map :word words$))
+    #_ (println "calculating char frequencies:")
+    (dorun (map println (take 3 (dict-to-ch-freq words$ cnstr))))
     )
   )
 
