@@ -1,0 +1,11 @@
+
+* Hang Man
+This is a command line hang man game. The UI is very rough. But the algorithm is highly optimized. 
+
+* How to run
+#+BEGIN_SRC bash
+lein deps
+java -cp 'lib/*:src/' clojure.main src/run.clj
+#+END_SRC
+
+
