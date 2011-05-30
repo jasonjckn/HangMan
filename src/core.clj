@@ -6,7 +6,6 @@
          [map-utils :only [deep-merge-with]]]
         [clojure.java io]))
 
-(def bit-size 63)
 (def alpha (map char (range (int \a) (+ (int \z) 1))))
 
 (defrecord DictEntry [word freq])
@@ -35,22 +34,16 @@
        (take trim-size)
        (group-by #(count (:word %)))))
 
-(defn bits-to-long [bits]
-  (-> (long 0) (for-> [[k v] (indexed bits)]
-                     (when-> v (bit-set k)))))
-
-(defnl to-bit-array [is-bit-set?]
-  (->> is-bit-set?
-       (partition bit-size bit-size (repeat false))
-       (map bits-to-long)
-       (long-array)))
+(defnl bit-vector-to-num [bit-vector]
+  (-> (bigint 0) (for-> [[k v] (indexed bit-vector)]
+                        (when-> v (bit-set k)))))
 
 (defnl build-index [meta-dict {:keys [len letter pos]}]
   (with-tag (index-data))
 
   :where [index-data (fn [] (->> (meta-dict len)
                                 (map #(= (nth (:word %) pos) letter))
-                                (to-bit-array)))
+                                (bit-vector-to-num)))
 
           with-tag (fn [index] {len {letter {pos index}}})])
 
@@ -64,26 +57,15 @@
                                p (range len)]
                            {:len len :letter a :pos p})])
 
-(defnl and-arrays [[a1 & as]]
-  (and-arrays-into-x!) x
-  :where
-  [x (aclone a1)
-   and-arrays-into-x! #(doseq [a as
-                               [idx, elem] (indexed a)]
-                         (aset-long x idx (bit-and (aget x idx) (aget a idx))))])
+(defnl index-unique [meta-index cnst]
+  (reduce #(.and %1 %2) partial-cnst-ba)
+  :where [partial-cnst-ba (for [[pos letter] cnst] ((meta-index letter) pos))])
 
-(defnl index-unique [index cnst]
-  (and-arrays partial-cnst-ba)
-  :where [partial-cnst-ba (for [[pos letter] cnst]
-                            ((index letter) pos))])
-
-(defnl bit-array->idxs [ba]
-  (->> (bit-seq ba)
-       (indexed)
-       (filter (fn [[_ bit]] bit))
-       (map (comp long first)))
-  :where [bit-seq (fn [array] (for [elem array i (range bit-size)]
-                               (bit-test elem i)))])
+(defnl bit-array->idxs [num]
+  (->> (indexed-bit-seq num) (filter bit-set?) (map first))
+  :where [indexed-bit-seq (fn [num] (for [i (range (.bitLength num))]
+                                     [i (bit-test num i)]))
+          bit-set? (fn [[idx bit]] (true? bit))])
 
 (defnl ba->words [dict ba]
   (map dict idxs)
