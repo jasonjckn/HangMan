@@ -8,8 +8,7 @@
   (println "starting")
   (def lazy-dict (lazy-dict!))
   (println "building meta-dict")
-  (def meta-dict$ (meta-dict lazy-dict 35000))
-  ;(def meta-dict$ (meta-dict lazy-dict 1000))
+  (time (def meta-dict$ (meta-dict lazy-dict 35000)))
   (println "building meta-index")
   (def meta-index$ (build-meta-index meta-dict$))
 

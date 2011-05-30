@@ -11,14 +11,7 @@
 
 (defrecord DictEntry [word freq])
 
-(defn lazy-dict! []
-  ;; Get it from: http://www.wordfrequency.info/500k_words.asp
-  ;;
-  ;; The first 3 lines of dict.txt should look like:
-  ;; 22995878	the	at	169011
-  ;; 11239776	and	cc	168844
-  ;; 10246048	of	io	168743
-  (line-seq (reader "dict.txt")))
+(defn lazy-dict! [] (line-seq (reader "dict.txt")))
 
 (defnl parsed-dict [lazy-dict]
   (->> lazy-dict
@@ -87,7 +80,7 @@
 (defnl bit-array->idxs [ba]
   (->> (bit-seq ba)
        (indexed)
-       (filter (fn [[_ b]] b))
+       (filter (fn [[_ bit]] bit))
        (map (comp long first)))
   :where [bit-seq (fn [array] (for [elem array i (range bit-size)]
                                (bit-test elem i)))])
